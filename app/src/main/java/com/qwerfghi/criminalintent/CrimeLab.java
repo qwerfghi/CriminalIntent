@@ -9,6 +9,7 @@ import com.qwerfghi.criminalintent.database.CrimeBaseHelper;
 import com.qwerfghi.criminalintent.database.CrimeCursorWrapper;
 import com.qwerfghi.criminalintent.database.CrimeDbSchema.CrimeTable;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -28,6 +29,7 @@ public class CrimeLab {
         values.put(CrimeTable.Cols.TITLE, crime.getTitle());
         values.put(CrimeTable.Cols.DATE, crime.getDate().getTime());
         values.put(CrimeTable.Cols.SOLVED, crime.isSolved() ? 1 : 0);
+        values.put(CrimeTable.Cols.SUSPECT, crime.getSuspect());
         return values;
     }
 
@@ -45,10 +47,9 @@ public class CrimeLab {
     }
 
     public Crime getCrime(UUID id) {
-        try (CrimeCursorWrapper cursor = queryCrimes(
-                CrimeTable.Cols.UUID + " = ?",
-                new String[]{id.toString()}
-        )) {
+        try (CrimeCursorWrapper cursor = queryCrimes(CrimeTable.Cols.UUID + " = ?",
+                new String[]{id.toString()})) {
+
             if (cursor.getCount() == 0) {
                 return null;
             }
@@ -94,5 +95,10 @@ public class CrimeLab {
             }
         }
         return crimes;
+    }
+
+    public File getPhotoFile(Crime crime) {
+        File filesDir = mContext.getFilesDir();
+        return new File(filesDir, crime.getPhotoFilename());
     }
 }
