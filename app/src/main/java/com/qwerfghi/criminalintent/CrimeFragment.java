@@ -31,11 +31,8 @@ import android.widget.ImageView;
 import java.io.File;
 import java.util.Date;
 import java.util.List;
-import java.util.UUID;
 
-/**
- * Created by Павел on 23.11.2017.
- */
+import io.realm.Realm;
 
 public class CrimeFragment extends Fragment {
 
@@ -56,6 +53,7 @@ public class CrimeFragment extends Fragment {
     private ImageView mPhotoView;
     private File mPhotoFile;
     private Callbacks mCallbacks;
+    private Realm mRealm;
 
     /**
      * Необходимый интерфейс для активности-хоста.
@@ -64,7 +62,7 @@ public class CrimeFragment extends Fragment {
         void onCrimeUpdated(Crime crime);
     }
 
-    public static CrimeFragment newInstance(UUID crimeId) {
+    public static CrimeFragment newInstance(String crimeId) {
         Bundle args = new Bundle();
         args.putSerializable(ARG_CRIME_ID, crimeId);
         CrimeFragment fragment = new CrimeFragment();
@@ -81,15 +79,16 @@ public class CrimeFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        UUID crimeId = (UUID) getArguments().getSerializable(ARG_CRIME_ID);
-        mCrime = CrimeLab.get(getActivity()).getCrime(crimeId);
+        mRealm = Realm.getDefaultInstance();
+        String crimeId = getArguments().getString(ARG_CRIME_ID);
+        mCrime = mRealm.where(Crime.class).equalTo("mId", crimeId).findFirst();
         mPhotoFile = CrimeLab.get(getActivity()).getPhotoFile(mCrime);
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        CrimeLab.get(getActivity()).updateCrime(mCrime);
+        mRealm.executeTransaction(realm -> realm.insertOrUpdate(mCrime));
     }
 
     @Override
@@ -114,7 +113,7 @@ public class CrimeFragment extends Fragment {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                mCrime.setTitle(s.toString());
+                mRealm.executeTransaction(realm -> mCrime.setTitle(s.toString()));
                 updateCrime();
             }
 
@@ -135,7 +134,7 @@ public class CrimeFragment extends Fragment {
         mSolvedCheckBox = v.findViewById(R.id.crime_solved);
         mSolvedCheckBox.setChecked(mCrime.isSolved());
         mSolvedCheckBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            mCrime.setSolved(isChecked);
+            mRealm.executeTransaction(realm -> mCrime.setSolved(isChecked));
             updateCrime();
         });
 
@@ -193,7 +192,7 @@ public class CrimeFragment extends Fragment {
         }
         if (requestCode == REQUEST_DATE) {
             Date date = (Date) data.getSerializableExtra(DatePickerFragment.EXTRA_DATE);
-            mCrime.setDate(date);
+            mRealm.executeTransaction(realm -> mCrime.setDate(date));
             mDateButton.setText(mCrime.getDate().toString());
             updateCrime();
         } else if (requestCode == REQUEST_CONTACT && data != null) {
@@ -206,7 +205,7 @@ public class CrimeFragment extends Fragment {
                 }
                 c.moveToFirst();
                 String suspect = c.getString(0);
-                mCrime.setSuspect(suspect);
+                mRealm.executeTransaction(realm -> mCrime.setSuspect(suspect));
                 mSuspectButton.setText(suspect);
             }
             updateCrime();
@@ -250,7 +249,7 @@ public class CrimeFragment extends Fragment {
     }
 
     private void updateCrime() {
-        CrimeLab.get(getActivity()).updateCrime(mCrime);
+        mRealm.executeTransaction(realm -> realm.insertOrUpdate(mCrime));
         mCallbacks.onCrimeUpdated(mCrime);
     }
 }

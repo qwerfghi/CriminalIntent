@@ -3,27 +3,28 @@ package com.qwerfghi.criminalintent;
 import java.util.Date;
 import java.util.UUID;
 
-/**
- * Created by Павел on 23.11.2017.
- */
+import io.realm.RealmObject;
+import io.realm.annotations.PrimaryKey;
 
-public class Crime {
-    private UUID mId;
+public class Crime extends RealmObject {
+
+    @PrimaryKey
+    private String mId;
     private String mTitle;
     private Date mDate;
     private boolean mSolved;
     private String mSuspect;
 
     public Crime() {
-        this(UUID.randomUUID());
+        this(UUID.randomUUID().toString());
     }
 
-    public Crime(UUID id) {
+    public Crime(String id) {
         mId = id;
         mDate = new Date();
     }
 
-    public UUID getId() {
+    public String getId() {
         return mId;
     }
 
@@ -60,6 +61,6 @@ public class Crime {
     }
 
     public String getPhotoFilename() {
-        return "IMG_" + getId().toString() + ".jpg";
+        return "IMG_" + getId() + ".jpg";
     }
 }

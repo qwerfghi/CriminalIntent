@@ -1,5 +1,6 @@
 package com.qwerfghi.criminalintent;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -18,9 +19,7 @@ import android.widget.TextView;
 
 import java.util.List;
 
-/**
- * Created by Павел on 23.11.2017.
- */
+import io.realm.Realm;
 
 public class CrimeListFragment extends Fragment {
     private RecyclerView mCrimeRecyclerView;
@@ -28,6 +27,7 @@ public class CrimeListFragment extends Fragment {
     private boolean mSubtitleVisible;
     private static final String SAVED_SUBTITLE_VISIBLE = "subtitle";
     private Callbacks mCallbacks;
+    private Realm mRealm;
 
     public interface Callbacks {
         void onCrimeSelected(Crime crime);
@@ -48,6 +48,7 @@ public class CrimeListFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mRealm = Realm.getDefaultInstance();
         setHasOptionsMenu(true);
     }
 
@@ -88,7 +89,7 @@ public class CrimeListFragment extends Fragment {
         switch (item.getItemId()) {
             case R.id.new_crime:
                 Crime crime = new Crime();
-                CrimeLab.get(getActivity()).addCrime(crime);
+                mRealm.executeTransaction((realm) -> realm.copyToRealm(crime));
                 updateUI();
                 mCallbacks.onCrimeSelected(crime);
                 return true;
@@ -166,8 +167,7 @@ public class CrimeListFragment extends Fragment {
     }
 
     public void updateUI() {
-        CrimeLab crimeLab = CrimeLab.get(getActivity());
-        List<Crime> crimes = crimeLab.getCrimes();
+        List<Crime> crimes = mRealm.where(Crime.class).findAll();
         if (mAdapter == null) {
             mAdapter = new CrimeAdapter(crimes);
             mCrimeRecyclerView.setAdapter(mAdapter);
@@ -179,9 +179,8 @@ public class CrimeListFragment extends Fragment {
     }
 
     private void updateSubtitle() {
-        CrimeLab crimeLab = CrimeLab.get(getActivity());
-        int crimeCount = crimeLab.getCrimes().size();
-        String subtitle = getString(R.string.subtitle_format, crimeCount);
+        int crimeCount = (int) mRealm.where(Crime.class).count();
+        @SuppressLint("StringFormatMatches") String subtitle = getString(R.string.subtitle_format, crimeCount);
         if (!mSubtitleVisible) {
             subtitle = null;
         }

@@ -10,14 +10,16 @@ import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 
 import java.util.List;
-import java.util.UUID;
+
+import io.realm.Realm;
 
 public class CrimePagerActivity extends AppCompatActivity implements CrimeFragment.Callbacks {
     private ViewPager mViewPager;
     private List<Crime> mCrimes;
+    private Realm mRealm;
     private static final String EXTRA_CRIME_ID = "com.qwerfghi.criminalintent.crime_id";
 
-    public static Intent newIntent(Context packageContext, UUID crimeId) {
+    public static Intent newIntent(Context packageContext, String crimeId) {
         Intent intent = new Intent(packageContext, CrimePagerActivity.class);
         intent.putExtra(EXTRA_CRIME_ID, crimeId);
         return intent;
@@ -28,10 +30,11 @@ public class CrimePagerActivity extends AppCompatActivity implements CrimeFragme
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_crime_pager);
 
-        UUID crimeId = (UUID) getIntent().getSerializableExtra(EXTRA_CRIME_ID);
+        String crimeId = getIntent().getStringExtra(EXTRA_CRIME_ID);
 
         mViewPager = findViewById(R.id.crime_view_pager);
-        mCrimes = CrimeLab.get(this).getCrimes();
+        mRealm = Realm.getDefaultInstance();
+        mCrimes = mRealm.where(Crime.class).findAll();
         FragmentManager fragmentManager = getSupportFragmentManager();
         mViewPager.setAdapter(new FragmentStatePagerAdapter(fragmentManager) {
             @Override

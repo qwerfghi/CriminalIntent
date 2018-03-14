@@ -15,10 +15,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 
-/**
- * Created by Павел on 25.11.2017.
- */
-
 public class DatePickerFragment extends DialogFragment {
     private static final String ARG_DATE = "date";
     public static final String EXTRA_DATE = "com.bignerdranch.android.criminalintent.date";
